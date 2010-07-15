@@ -63,6 +63,7 @@
       before: function() {
         this.app = new Sammy.Application(function() {
           this.location_proxy = new Sammy.DataLocationProxy(this);
+					this.get("#/test", function() { });
         });
       }
     })
@@ -73,6 +74,24 @@
       var proxy = new Sammy.DataLocationProxy(this.app, 'othername');
       proxy.setLocation('newlocation');
       equal($('body').data('othername'), 'newlocation');
+    })
+    .should('trigger app event when data changes via clicked links', function() {
+      var triggered = false, 
+          location = false,
+          app = this.app;
+			$('<a/>').attr({id: "trigger_this", href: "#/test"}).appendTo('body');
+      app.bind('location-changed', function() {
+        triggered = true;
+        location = this.app.getLocation();
+      });
+      ok(!triggered);
+      app.run('#/');
+      $("#trigger_this").trigger('click');
+      soon(function() {
+        ok(triggered);
+        equal(location, '#/test');
+        app.unload();
+      }, this, 2, 3);
     })
     .should('trigger app event when data changes', function() {
       $('body').data(this.app.location_proxy.data_name, '');
